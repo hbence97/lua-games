@@ -30,6 +30,12 @@ function love.update(deltaTime)
   for index, zombie in ipairs(zombies) do
     zombie.x = zombie.x + ( math.cos(zombiePlayerAngle(zombie)) * zombie.speed * deltaTime )
     zombie.y = zombie.y + ( math.sin(zombiePlayerAngle(zombie)) * zombie.speed * deltaTime )
+
+    if distanceBetween(zombie.x, zombie.y, player.x, player.y) < 35 then
+      for i, z in ipairs(zombies) do
+        zombies[i] = nil
+      end
+    end
   end
 end
 
@@ -56,6 +62,11 @@ end
 
 function zombiePlayerAngle(zombie)
   return math.atan2(player.y - zombie.y, player.x - zombie.x)
+end
+
+-- Distance between two points
+function distanceBetween(x1, y1, x2, y2)
+	return math.sqrt( (x2 - x1) ^ 2 + (y2 - y1) ^ 2 )
 end
 
 function spawnZombie()
