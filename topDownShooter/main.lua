@@ -10,6 +10,8 @@ function love.load()
   player.y = love.graphics.getHeight() / 2
   player.speed = 140
 
+  bullets = {}
+
   zombies = {}
 end
 
@@ -37,6 +39,19 @@ function love.update(deltaTime)
       end
     end
   end
+
+  for index, bullet in ipairs(bullets) do
+    bullet.x = bullet.x + ( math.cos(bullet.direction) * bullet.speed * deltaTime )
+    bullet.y = bullet.y + ( math.sin(bullet.direction) * bullet.speed * deltaTime )
+  end
+
+-- Remove bullet from table when it's out of bonds
+  for i=#bullets, 1, -1 do
+    local bullet = bullets[i]
+    if bullet.x < 0 or bullet.y < 0 or bullet.x > love.graphics.getWidth() or bullet.x > love.graphics.getHeight() then
+      table.remove(bullets, i)
+    end
+  end
 end
 
 function love.draw()
@@ -47,11 +62,21 @@ function love.draw()
   for i, zombie in ipairs(zombies) do
     love.graphics.draw(sprites.zombie, zombie.x, zombie.y, zombiePlayerAngle(zombie), nil, nil, sprites.zombie:getWidth() / 2, sprites.zombie:getHeight() / 2)
   end
+
+  for i, bullet in ipairs(bullets) do
+    love.graphics.draw(sprites.bullet, bullet.x, bullet.y, playerMouseAngle(), 0.5, 0.5, sprites.bullet:getWidth() / 2, sprites.bullet:getHeight() / 2)
+  end
 end
 
 function love.keypressed(key)
   if key == "space" then
     spawnZombie()
+  end
+end
+
+function love.mousepressed(x, y, button)
+  if button == 1 then
+    spawnBullets()
   end
 end
 
@@ -76,4 +101,15 @@ function spawnZombie()
   zombie.speed = 120
 
   table.insert(zombies, zombie)
+end
+
+function spawnBullets()
+  local bullet = {}
+
+  bullet.x = player.x
+  bullet.y = player.y
+  bullet.speed = 500
+  bullet.direction = playerMouseAngle()
+
+  table.insert(bullets, bullet)
 end
