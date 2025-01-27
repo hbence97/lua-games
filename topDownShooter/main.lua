@@ -46,9 +46,34 @@ function love.update(deltaTime)
   end
 
 -- Remove bullet from table when it's out of bonds
-  for i=#bullets, 1, -1 do
+  for i = #bullets, 1, -1 do
     local bullet = bullets[i]
     if bullet.x < 0 or bullet.y < 0 or bullet.x > love.graphics.getWidth() or bullet.x > love.graphics.getHeight() then
+      table.remove(bullets, i)
+    end
+  end
+
+-- Hit detection for zombies and bullets
+  for i, zombie in ipairs(zombies) do
+    for j, bullet in ipairs(bullets) do
+      if distanceBetween(zombie.x, zombie.y, bullet.x, bullet.y) < 20 then
+        zombie.dead = true
+        bullet.dead = true
+      end
+    end
+  end
+
+-- Remove dead zombies and bullets
+  for i = #zombies, 1, -1 do
+    local zombie = zombies[i]
+    if zombie.dead then
+      table.remove(zombies, i)
+    end
+  end
+
+  for i = #bullets, 1, -1 do
+    local bullet = bullets[i]
+    if bullet.dead then
       table.remove(bullets, i)
     end
   end
@@ -96,9 +121,11 @@ end
 
 function spawnZombie()
   local zombie = {}
+
   zombie.x = math.random(0, love.graphics.getWidth())
   zombie.y = math.random(0, love.graphics.getWidth())
   zombie.speed = 120
+  zombie.dead = false
 
   table.insert(zombies, zombie)
 end
@@ -110,6 +137,7 @@ function spawnBullets()
   bullet.y = player.y
   bullet.speed = 500
   bullet.direction = playerMouseAngle()
+  bullet.dead = false
 
   table.insert(bullets, bullet)
 end
