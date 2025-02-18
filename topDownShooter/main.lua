@@ -13,6 +13,11 @@ function love.load()
   bullets = {}
 
   zombies = {}
+
+  -- 0: game over / in menu, 1: in game
+  gameState = 1
+  spawnTime = 2
+  timerToSpawn = spawnTime
 end
 
 function love.update(deltaTime)
@@ -36,6 +41,7 @@ function love.update(deltaTime)
     if distanceBetween(zombie.x, zombie.y, player.x, player.y) < 35 then
       for i, z in ipairs(zombies) do
         zombies[i] = nil
+        gameState = 0
       end
     end
   end
@@ -75,6 +81,15 @@ function love.update(deltaTime)
     local bullet = bullets[i]
     if bullet.dead then
       table.remove(bullets, i)
+    end
+  end
+
+  if gameState == 1 then
+    timerToSpawn = timerToSpawn - deltaTime
+    if timerToSpawn <= 0 then
+      spawnZombie()
+      spawnTime = spawnTime * 0.95
+      timerToSpawn = spawnTime
     end
   end
 end
@@ -121,11 +136,26 @@ end
 
 function spawnZombie()
   local zombie = {}
+  local spawnPoint = math.random(1, 4) -- 1 left, 2 right, 3 top, 4 bottom
 
-  zombie.x = math.random(0, love.graphics.getWidth())
-  zombie.y = math.random(0, love.graphics.getWidth())
+  zombie.x = 0
+  zombie.y = 0
   zombie.speed = 120
   zombie.dead = false
+
+  if spawnPoint == 1 then
+    zombie.x = -30
+    zombie.y = math.random(0, love.graphics.getHeight())
+  elseif spawnPoint == 2 then
+    zombie.x = love.graphics.getWidth() + 30
+    zombie.y = math.random(0, love.graphics.getHeight())
+  elseif spawnPoint == 3 then
+    zombie.x = math.random(0, love.graphics.getWidth())
+    zombie.y = -30
+  elseif spawnPoint == 4 then
+    zombie.x = math.random(0, love.graphics.getWidth())
+    zombie.y = love.graphics.getHeight() + 30
+  end
 
   table.insert(zombies, zombie)
 end
