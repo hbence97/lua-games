@@ -1,4 +1,7 @@
 function love.load()
+  -- Creating a randomseed for every new game
+  math.randomseed(os.time())
+
   target = {}
   target.x = 200
   target.y = 200
