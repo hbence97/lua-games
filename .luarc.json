@@ -1,0 +1,7 @@
+{
+    "diagnostics.disable": [
+        "lowercase-global",
+        "param-type-mismatch",
+        "duplicate-set-field"
+    ]
+}

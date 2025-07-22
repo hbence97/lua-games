@@ -1,4 +1,7 @@
 function love.load()
+  -- Creating a randomseed for every new game
+  math.randomseed(os.time())
+
   sprites = {}
   sprites.player = love.graphics.newImage("sprites/player.png")
   sprites.zombie = love.graphics.newImage("sprites/zombie.png")
@@ -14,34 +17,46 @@ function love.load()
 
   zombies = {}
 
+  score = 0
+  lastScore = 0
+  highScore = 0
+
   -- 0: game over / in menu, 1: in game
-  gameState = 1
+  gameState = 0
   spawnTime = 2
   timerToSpawn = spawnTime
 end
 
 function love.update(deltaTime)
-  if love.keyboard.isDown("w") then
-    player.y = player.y - player.speed * deltaTime
-  end
-  if love.keyboard.isDown("a") then
-    player.x = player.x - player.speed * deltaTime
-  end
-  if love.keyboard.isDown("s") then
-    player.y = player.y + player.speed * deltaTime
-  end
-  if love.keyboard.isDown("d") then
-    player.x = player.x + player.speed * deltaTime
+  if gameState == 1 then
+    if love.keyboard.isDown("w") then
+      player.y = player.y - player.speed * deltaTime
+    end
+    if love.keyboard.isDown("a") then
+      player.x = player.x - player.speed * deltaTime
+    end
+    if love.keyboard.isDown("s") then
+      player.y = player.y + player.speed * deltaTime
+    end
+    if love.keyboard.isDown("d") then
+      player.x = player.x + player.speed * deltaTime
+    end
   end
 
   for index, zombie in ipairs(zombies) do
     zombie.x = zombie.x + ( math.cos(zombiePlayerAngle(zombie)) * zombie.speed * deltaTime )
     zombie.y = zombie.y + ( math.sin(zombiePlayerAngle(zombie)) * zombie.speed * deltaTime )
 
+    -- Game over
     if distanceBetween(zombie.x, zombie.y, player.x, player.y) < 35 then
       for i, z in ipairs(zombies) do
         zombies[i] = nil
         gameState = 0
+        lastScore = score
+        spawnTime = 2
+        if highScore < score then
+          highScore = score
+        end
       end
     end
   end
@@ -51,25 +66,26 @@ function love.update(deltaTime)
     bullet.y = bullet.y + ( math.sin(bullet.direction) * bullet.speed * deltaTime )
   end
 
--- Remove bullet from table when it's out of bonds
+  -- Remove bullet from table when it's out of bonds
   for i = #bullets, 1, -1 do
     local bullet = bullets[i]
-    if bullet.x < 0 or bullet.y < 0 or bullet.x > love.graphics.getWidth() or bullet.x > love.graphics.getHeight() then
+    if bullet.x < 0 or bullet.y < 0 or bullet.x > love.graphics.getWidth() or bullet.y > love.graphics.getHeight() then
       table.remove(bullets, i)
     end
   end
 
--- Hit detection for zombies and bullets
+  -- Hit detection for zombies and bullets
   for i, zombie in ipairs(zombies) do
     for j, bullet in ipairs(bullets) do
       if distanceBetween(zombie.x, zombie.y, bullet.x, bullet.y) < 20 then
         zombie.dead = true
         bullet.dead = true
+        score = score + 10
       end
     end
   end
 
--- Remove dead zombies and bullets
+  -- Remove dead zombies and bullets
   for i = #zombies, 1, -1 do
     local zombie = zombies[i]
     if zombie.dead then
@@ -84,18 +100,40 @@ function love.update(deltaTime)
     end
   end
 
+  -- Zombie spawn time maxed out at 0.4 seconds
   if gameState == 1 then
     timerToSpawn = timerToSpawn - deltaTime
     if timerToSpawn <= 0 then
       spawnZombie()
       spawnTime = spawnTime * 0.95
       timerToSpawn = spawnTime
+      if (timerToSpawn < 0.41) then
+        timerToSpawn = 0.4
+      end
     end
   end
 end
 
 function love.draw()
   love.graphics.draw(sprites.background)
+  love.graphics.setNewFont(40)
+
+  if gameState == 0 then
+    love.graphics.printf("Press enter to start the game!", 0, 100, love.graphics.getWidth(), "center")
+    if highScore > 0 then
+      love.graphics.print("High score : " .. highScore, 5, 5)
+      love.graphics.print("Last score : " .. lastScore, 5, 50)
+    end
+  end
+
+  if gameState == 1 then
+    if highScore == 0 then
+      love.graphics.print("Score: " .. score, 5, 5)
+    elseif highScore > 0 then
+      love.graphics.print("High score : " .. highScore, 5, 5)
+      love.graphics.print("Score: " .. score, 5, 50)
+    end
+  end
 
   love.graphics.draw(sprites.player, player.x, player.y, playerMouseAngle(), nil, nil, sprites.player:getWidth() / 2, sprites.player:getHeight() / 2)
 
@@ -109,13 +147,18 @@ function love.draw()
 end
 
 function love.keypressed(key)
+  if key == "return" and gameState == 0 then
+    gameState = 1
+    score = 0
+  end
+
   if key == "space" then
     spawnZombie()
   end
 end
 
 function love.mousepressed(x, y, button)
-  if button == 1 then
+  if gameState == 1 and button == 1 then
     spawnBullets()
   end
 end
